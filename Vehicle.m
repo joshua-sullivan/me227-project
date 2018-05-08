@@ -14,6 +14,8 @@ classdef Vehicle < handle
         Iz
         Caf
         Car
+        Caf_lin
+        Car_lin
         usteer_grad_radpmps2
         usteer_grad_degpg
         mu_f
@@ -21,6 +23,8 @@ classdef Vehicle < handle
         mu_r
         mu_rs
         front_W_percent
+        f_rr
+        CdA
         Wf
         Wr
         length_a
@@ -63,12 +67,16 @@ classdef Vehicle < handle
             veh.Iz                = 0;
             veh.Caf               = 0;
             veh.Car               = 0;
+            veh.Caf_lin           = 0;
+            veh.Car_lin           = 0;
             veh.usteer_grad_radpmps2   = 0;
             veh.usteer_grad_degpg = 0;
             veh.mu_f              = 0;
             veh.mu_fs             = 0;
             veh.mu_r              = 0;
             veh.mu_rs             = 0;
+            veh.f_rr              = 0;
+            veh.CdA               = 0;
             veh.front_W_percent   = 0;
             veh.Wf                = 0;
             veh.Wr                = 0;
@@ -102,6 +110,7 @@ classdef Vehicle < handle
             veh.ctrl.lat.params.Car_laff = veh.Car;
         end
         
+        
         function setVehStateIC(veh, varargin)
             % Method for programmatically setting the internal vehicle
             % dynamical state initial conditions.
@@ -121,7 +130,7 @@ classdef Vehicle < handle
             end           
         end
         
-       
+    
         function [usteer_grad_radpmps2, usteer_grad_degpg] = calculateUndersteerGrad(veh)
             % Method for computing the vehicle understeer gradient
             
@@ -129,6 +138,7 @@ classdef Vehicle < handle
             usteer_grad_degpg = usteer_grad_radpmps2 * veh.RAD2DEG;
             
         end
+        
         
         function Vch = calcCharSpeed(veh)
             % Method for computing the vehicle characteristic speed
@@ -142,6 +152,7 @@ classdef Vehicle < handle
             end
             
         end
+        
         
         function [nat_freq, damp_ratio] = calc2ndOrderSpec(veh, Ux)
             % Method for computing the vehicle response characterstics at a
@@ -172,7 +183,8 @@ classdef Vehicle < handle
             end
                      
         end
-               
+             
+        
         function Krss = calcSSYawGain(veh, Ux)
             % Method for computing the steady state yaw gain for a given
             % constant longitudinal velocity.  Outputs a vector of gains
@@ -211,8 +223,7 @@ classdef Vehicle < handle
             Fy_r = -veh.Car * alpha_r;          
             
         end
-        
-        
+                
         
         function [Fy_f, Fy_r] = calcFialaNLTireForce(veh)
             % Method for computing nonlinear tire forces given by the Fiala
@@ -260,7 +271,7 @@ classdef Vehicle < handle
         function eulerIntegrate(veh, dt)
             % Method for running one step of the Euler integration method
             % on the vehicle dynamical state elements.
-            
+                        
             veh.state.x_dot(:, end+1) = veh.state.x_dot(:, end) + (veh.state_dot.x_ddot(:, end) * dt);
             veh.state.y_dot(:, end+1) = veh.state.y_dot(:, end) + (veh.state_dot.y_ddot(:, end) * dt);
             veh.state.yaw(:, end+1) = veh.state.yaw(:, end) + (veh.state_dot.yaw_dot(:, end) * dt);
@@ -269,6 +280,7 @@ classdef Vehicle < handle
             veh.state.e(:, end+1) = veh.state.e(:, end) + (veh.state_dot.e_dot(:, end) * dt);
             veh.state.dPsi(:, end+1) = veh.state.dPsi(:, end) + (veh.state_dot.dPsi_dot(:, end) * dt);
         end
+        
         
         function updatePlanarBicycleDynamics(veh, use_NL_tires)
             % Method for computing the state derivatives according to the
@@ -298,6 +310,7 @@ classdef Vehicle < handle
             
         end
         
+        
         function A = lookaheadDynamics(veh, Ux)
             % Method for computing the look ahead dynamics matrix given a
             % longitudinal velocity, Ux.
@@ -316,6 +329,7 @@ classdef Vehicle < handle
             
         end
         
+        
         function lookaheadController(veh)
             % Method for  computing the steer angle for the lookahead 
             % controller
@@ -326,6 +340,7 @@ classdef Vehicle < handle
                 (veh.state.e(:, end) + (x_la * veh.state.dPsi(:, end))) / veh.ctrl.lat.params.Caf_la;
                    
         end  
+        
         
         function lookaheadFFController(veh)
             % Method for computing the steer angle for the lookahead
@@ -343,7 +358,6 @@ classdef Vehicle < handle
             
             dPsi_ss = K_rc*((m*a*(Ux^2)/(L*veh.ctrl.lat.params.Car_laff)) - b);
             delta_ff = ((K_la * x_la * dPsi_ss)/veh.Caf) + K_rc * (L + veh.usteer_grad_radpmps2 * Ux^2);
-%             delta_ff = ((K_la * x_la * dPsi_ss)/veh.ctrl.lat.params.Caf_la) + K_rc * (L + veh.usteer_grad_radpmps2 * Ux^2);
 
             veh.lookaheadController();
             veh.ctrl.lat.inputs.steer_angle(:, end) = veh.ctrl.lat.inputs.steer_angle(:, end) + delta_ff;
@@ -451,6 +465,7 @@ classdef Vehicle < handle
                       
         end
         
+        
         function propagateFullNLDynamics(veh, sim_cfg)
             % Method for propagating the full nonlinear dynamical model. 
             
@@ -467,6 +482,7 @@ classdef Vehicle < handle
             end
                   
         end
+        
         
         function plotNLSimulationResults(veh, sim_cfg)
             % Method for plotting results.  
@@ -520,8 +536,7 @@ classdef Vehicle < handle
             set(gca,'FontSize', FS,'TickLabelInterpreter', 'Latex')
             
         end
-        
-              
+                 
     end
     
 end
