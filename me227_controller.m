@@ -44,6 +44,8 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     Shelley = loadVehicleParams();    
     
     if modeSelector == 1
+    % Runs the feedforward lookahead lateral controller with a
+    % feedfoward/PI-feedback longitudinal controller.
         
         % Lateral control law
         delta_rad = runLookaheadFFWController(Shelley, state, pathPlan);
@@ -54,7 +56,10 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
         % Longitudinal control law
         [Fx_N, integrated_Ux_error] = runLongitudinalController(Shelley, state, delta_rad, ...
             Fyf_N, pathPlan, integrated_Ux_error, dt);
-    else
+        
+    elseif modeSelector == 2
+    % Runs the lateral PID controller with a feedforward/PI-feedback
+    % longitudinal controller.
         
         % Lateral control law
         delta_rad = []; %runLateralPIDController(Shelley, state, etc...);
@@ -65,11 +70,16 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
         % Longitudinal control law
         [Fx_N, integrated_Ux_error] = runLongitudinalController(Shelley, state, delta_rad, ...
             Fyf_N, pathPlan, integrated_Ux_error, dt);
+        
+    else
+    % Maybe another...
+        
     end
 
 end
 
 function veh = loadVehicleParams()
+% Method for loading the vehicle parameters.
     
     % Setting parameters from the provided data sheet
     veh.m = 1659;           % mass [kg]
@@ -103,6 +113,8 @@ function veh = loadVehicleParams()
 end
 
 function delta_rad = runLookaheadFFWController(veh, state, pathPlan)
+% Method for computing the steering angle using a lookahead controller with
+% a feedforward term.
 
     % Set controller gains/params
     K_la = [];
@@ -207,15 +219,12 @@ function [Fx_N, integrated_error] = runLongitudinalController(veh, state, delta_
     Fx_N = Fx_fb_N + Fx_ffw_N;
 end
 
-function curv = computePathCurvature(s_m, path)
-% Method for computing the path curvature from the open-loop path.
-
-    curv = interp1(path.s_m, path.k_1pm, s_m);
-
-end
-
 function pathPlan = runPathPlanner(state, path)
 % Computes the open-loop path plan from the current state and the a priori
 % known path data.
 
+    pathPlan.curv = interp1(path.s_m, path.k_1pm, state.s_m);
+    pathPlan.Ux_des_mps = [];
+    pathPlan.Ux_dot_des_mps2 = [];
+    
 end
