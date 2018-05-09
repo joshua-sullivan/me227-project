@@ -34,6 +34,7 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     % PI(D) controller)
     persistent integrated_Ux_error
     
+    % Create the state object for easier data passing
     state.s_m = s_m;
     state.e_m = e_m;
     state.deltaPsi_rad = deltaPsi_rad;
@@ -41,8 +42,12 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     state.Uy_mps = Uy_mps;
     state.r_radps = r_radps;
     
-    Shelley = loadVehicleParams();    
+    % Create the vehicle object that holds relevant parameters
+    Shelley = loadVehicleParams();   
     
+    % Run a table look-up/interpolation from open-loop desired trajectory
+    pathPlan = runPathPlanner(state, path);
+       
     if modeSelector == 1
     % Runs the feedforward lookahead lateral controller with a
     % feedfoward/PI-feedback longitudinal controller.
