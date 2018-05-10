@@ -82,12 +82,19 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     % initialize dt
     dt = 0.01;
     
+    %% Controllers
     if modeSelector == 1
     % Runs the feedforward lookahead lateral controller with a
     % feedfoward/PI-feedback longitudinal controller.
         
         % Lateral control law
-        delta_rad = runLookaheadFFWController(veh, state, pathPlan);
+        K_la = 3500;
+        x_la = 15;
+        dPsi_ss = pathPlan.curv*((veh.m * veh.a * (state.Ux_mps^2) / ...    
+            (veh.L * veh.Car_lin)) - veh.b);
+        delta_ff = (K_la * x_la * dPsi_ss / veh.Caf_lin) + ...
+            (pathPlan.curv * (veh.L + veh.K * state.Ux_mps^2));
+        delta_rad = (-K_la * (state.e_m + (x_la * state.deltaPsi_rad)) / veh.Caf_lin) + delta_ff;
         
         % Compute the lateral tire forces
         [Fyf_N, ~] = computeFialaNLTireForce(veh, state, delta_rad);
@@ -115,23 +122,6 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
         
     end
 
-end
-
-function delta_rad = runLookaheadFFWController(veh, state, pathPlan)
-% Method for computing the steering angle using a lookahead controller with
-% a feedforward term.
-
-    % Set controller gains/params
-    K_la = 3500;
-    x_la = 15;
-
-    dPsi_ss = pathPlan.curv*((veh.m * veh.a * (state.Ux_mps^2) / ...    
-        (veh.L * veh.Car_lin)) - veh.b);
-               
-    delta_ff = (K_la * x_la * dPsi_ss / veh.Caf_lin) + ...
-        (pathPlan.curv * (veh.L + veh.K * state.Ux_mps^2));
-    
-    delta_rad = (-K_la * (state.e_m + (x_la * state.deltaPsi_rad)) / veh.Caf_lin) + delta_ff;
 end
 
 function [alpha_f, alpha_r] = computeSideslipAngles(veh, state, delta_rad)
