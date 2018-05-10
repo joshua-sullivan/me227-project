@@ -3,7 +3,7 @@
 
 clc
 close all
-clear all
+clear
 
 % Load the project data for the path info
 load project_data.mat
