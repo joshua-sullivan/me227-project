@@ -33,6 +33,7 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     % approximate a numerical integration (useful for integral terms in the
     % PI(D) controller)
     persistent integrated_Ux_error
+    persistent prev_e_m
     
     if isempty(integrated_Ux_error)
         integrated_Ux_error = 0;
@@ -128,8 +129,14 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     % Runs the lateral PID controller with a feedforward/PI-feedback
     % longitudinal controller.
         
-        % Lateral control law
-        delta_rad = runLateralPIDController(veh, state, pathPlan);
+        % Lateral control law (compute delta based on PD control law)
+        if  isempty(prev_e_m)
+            prev_e_m= 0;
+        end
+        Kp = 6000/veh.Caf;
+        Kd = 45;
+        delta_rad = -Kp * (state.e_m + Kd * prev_e_m);
+        prev_e_m = state.e_m;
         
         % Compute the lateral tire forces
         alpha_f = atan2(state.Uy_mps + (veh.a * state.r_radps), state.Ux_mps) - delta_rad;
@@ -174,14 +181,5 @@ end
 
 
 function delta_rad = runLateralPIDController(veh, state, pathPlan)
-%computes delta based on PD control law
-persistent prev_e_m 
-if  isempty(prev_e_m)
-    prev_e_m= 0;
-end
 
-Kp = 6000/veh.Caf;
-Kd = 45;
-delta_rad = -Kp * (state.e_m + Kd * prev_e_m);
-prev_e_m = state.e_m;
 end
