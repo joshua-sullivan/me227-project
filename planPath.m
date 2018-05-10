@@ -16,7 +16,7 @@ function [Ux_des, Ux_dot_des] = planPath(path)
 
     % max acceleration specifications
     max_ax_pos = 5; % [m/s^2] 
-    max_ax_neg = -2; % [m/s^2]
+    max_ax_neg = -3; % [m/s^2]
     max_a = 3.5; % [m/s^2]
     
     % initialize outputs
