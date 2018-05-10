@@ -15,9 +15,9 @@ function path = planPath(path)
 % segments where the transition from acceleration to decelaration happens.
 
     % max acceleration specifications
-    max_ax_pos = 5; % [m/s^2] 
-    max_ax_neg = -3; % [m/s^2]
-    max_a = 3.5; % [m/s^2]
+    max_ax_pos = 3; % [m/s^2] 
+    max_ax_neg = -4; % [m/s^2]
+    max_a = 4; % [m/s^2]
     
     % initialize outputs
     Ux_des = zeros(length(path.s_m), 1);
