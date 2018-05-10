@@ -178,8 +178,3 @@ function Fy = helperFialaTireForce(Ca, alpha, mu, mu_s, W)
          (((Ca^3) / (9 * mu * mu * W * W)) * (tan(alpha)^3) * (1 - (2 * mu_s / 3 / mu)));
             
 end
-
-
-function delta_rad = runLateralPIDController(veh, state, pathPlan)
-
-end
