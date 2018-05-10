@@ -35,6 +35,15 @@ function data = runValidationSim()
     
     % Set controller mode here
     modeSelector = 1;
+    
+    % Initialize state variables
+    s_m = zeros(dim_t,1);
+    e_m = zeros(dim_t,1);
+    deltaPsi_rad = zeros(dim_t,1);
+    Ux_mps = zeros(dim_t,1);
+    Uy_mps = zeros(dim_t,1);
+    r_radps = zeros(dim_t,1);
+        
 
     % Run main simulation stepwise
     for ii = 1:dim_t
@@ -132,8 +141,8 @@ function veh = loadVehicleParams()
     veh.Wf = veh.perc_W_f * veh.W;              % vehicle front weight [N]
     veh.Wr = veh.W - veh.Wf;                    % vehicle rear weight [N]
     veh.perc_W_r = 1 - veh.perc_W_f;            % percentage weight on rear [fractional]
-    veh.a = veh.wheelbase * veh.perc_W_r;       % distance from front wheel to CG [m]
-    veh.b = veh.wheelbase * veh.perc_W_f;       % distance from rear wheel to CG [m]
+    veh.a = veh.L * veh.perc_W_r;       % distance from front wheel to CG [m]
+    veh.b = veh.L * veh.perc_W_f;       % distance from rear wheel to CG [m]
     
     % Computing understeer gradient [rad/m/s^2]
     veh.K = veh.m * ((veh.perc_W_f / veh.Caf) - (veh.perc_W_r / veh.Car));
