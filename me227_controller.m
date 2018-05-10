@@ -97,7 +97,13 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
         delta_rad = (-K_la * (state.e_m + (x_la * state.deltaPsi_rad)) / veh.Caf_lin) + delta_ff;
         
         % Compute the lateral tire forces
-        [Fyf_N, ~] = computeFialaNLTireForce(veh, state, delta_rad);
+        alpha_f = atan2(state.Uy_mps + (veh.a * state.r_radps), state.Ux_mps) - delta_rad;
+        alpha_slip_f = abs(atan2(3 * veh.mu_f * veh.Wf, veh.Caf));
+        if abs(alpha_f) < alpha_slip_f
+            Fyf_N = helperFialaTireForce(veh.Caf, alpha_f, veh.mu_f, veh.mu_fs, veh.Wf);
+        else
+            Fyf_N = -veh.mu_fs * veh.Wf * sign(alpha_f);
+        end
         
         % Longitudinal control law
         [Fx_N, integrated_Ux_error] = runLongitudinalController(veh, state, delta_rad, ...
@@ -111,7 +117,13 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
         delta_rad = runLateralPIDController(veh, state, pathPlan);
         
         % Compute the lateral tire forces
-        [Fyf_N, ~] = computeFialaNLTireForce(veh, state, delta_rad);
+        alpha_f = atan2(state.Uy_mps + (veh.a * state.r_radps), state.Ux_mps) - delta_rad;
+        alpha_slip_f = abs(atan2(3 * veh.mu_f * veh.Wf, veh.Caf));
+        if abs(alpha_f) < alpha_slip_f
+            Fyf_N = helperFialaTireForce(veh.Caf, alpha_f, veh.mu_f, veh.mu_fs, veh.Wf);
+        else
+            Fyf_N = -veh.mu_fs * veh.Wf * sign(alpha_f);
+        end
         
         % Longitudinal control law
         [Fx_N, integrated_Ux_error] = runLongitudinalController(veh, state, delta_rad, ...
@@ -124,15 +136,6 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
 
 end
 
-function [alpha_f, alpha_r] = computeSideslipAngles(veh, state, delta_rad)
-% Method for computing the side slip angles without making any small 
-% angle approximations.
-           
-    alpha_f = atan2(state.Uy_mps + (veh.a * state.r_radps), state.Ux_mps) - delta_rad;
-    alpha_r = atan2(state.Uy_mps - (veh.b * state.r_radps), state.Ux_mps);
-            
-end
-
 function Fy = helperFialaTireForce(Ca, alpha, mu, mu_s, W)
 % Helper function for computing Fy according to Fiala model
                 
@@ -140,27 +143,6 @@ function Fy = helperFialaTireForce(Ca, alpha, mu, mu_s, W)
          (((Ca^2) / (3 * mu * W) * (2 - (mu_s / mu))) * abs(tan(alpha)) *tan(alpha)) - ...
          (((Ca^3) / (9 * mu * mu * W * W)) * (tan(alpha)^3) * (1 - (2 * mu_s / 3 / mu)));
             
-end
-
-function [Fyf_N, Fyr_N] = computeFialaNLTireForce(veh, state, delta_rad)
-% Method for computing nonlinear tire forces given by the Fiala tire model. 
-        
-    [alpha_f, alpha_r] = computeSideslipAngles(veh, state, delta_rad);
-
-    alpha_slip_f = abs(atan2(3 * veh.mu_f * veh.Wf, veh.Caf));
-    if abs(alpha_f) < alpha_slip_f
-        Fyf_N = helperFialaTireForce(veh.Caf, alpha_f, veh.mu_f, veh.mu_fs, veh.Wf);
-    else
-        Fyf_N = -veh.mu_fs * veh.Wf * sign(alpha_f);
-    end
-
-    alpha_slip_r = abs(atan2(3 * veh.mu_r * veh.Wr, veh.Car));
-    if abs(alpha_r) < alpha_slip_r
-        Fyr_N = helperFialaTireForce(veh.Car, alpha_r, veh.mu_r, veh.mu_rs, veh.Wr);
-    else
-        Fyr_N = -veh.mu_rs * veh.Wr * sign(alpha_r); 
-    end
-
 end
 
 function [Fdrag, Frr] = computeExternalForces(veh, state)
