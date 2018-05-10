@@ -37,19 +37,21 @@ function X = simNonLinearBikeModel(car, frontTires, rearTires, path, Ux_des, X0,
         % Look up Curvature
         K = interp1(path.s_m, path.k_1pm, s(idx));
         
-        % Calculate Control inputs
-        Calpha1 = 188000; % N/rad
-        xla = 15; % m
-        Kla = 3500; % N/m
-        Calpha2 = 203000; % N/rad
-        dpsi_ss = K * (((car.m * car.a * U_x(idx)^2) / (car.L * Calpha2)) - car.b);
-        if useFF
-            delta_ff = ((Kla * xla * dpsi_ss)/car.C_alphaf) + K * (car.L + car.k_rad * U_x(idx)^2);
-        else
-            delta_ff = 0;
-        end
-        delta(idx) = (-Kla / Calpha1) * (e(idx) + xla * dpsi(idx)) + delta_ff;
-        F_xtotal(idx) = car.Kdrive * (currUx_des - U_x(idx));
+        [delta(idx), F_xtotal(idx)] = me227_controller(s(idx), e(idx), dpsi(idx), U_x(idx), U_y(idx), r(idx), 1, path);
+
+% %         Calculate Control inputs
+% %         Calpha1 = 188000; % N/rad
+% %         xla = 15; % m
+% %         Kla = 3500; % N/m
+% %         Calpha2 = 203000; % N/rad
+% %         dpsi_ss = K * (((car.m * car.a * U_x(idx)^2) / (car.L * Calpha2)) - car.b);
+% %         if useFF
+% %             delta_ff = ((Kla * xla * dpsi_ss)/car.C_alphaf) + K * (car.L + car.k_rad * U_x(idx)^2);
+% %         else
+% %             delta_ff = 0;
+% %         end
+% %         delta(idx) = (-Kla / Calpha1) * (e(idx) + xla * dpsi(idx)) + delta_ff;
+% %         F_xtotal(idx) = car.Kdrive * (currUx_des - U_x(idx));
         
         % Step 1: calculate slip angles from velocities and steer angles
         alphaf = atan2((U_y(idx) + car.a * r(idx)) , U_x(idx)) - delta(idx);
@@ -59,8 +61,8 @@ function X = simNonLinearBikeModel(car, frontTires, rearTires, path, Ux_des, X0,
         Fz = car.m * car.g;
         F_yf = computeTireForce(frontTires, Fz, alphaf);
         F_yr = computeTireForce(rearTires, Fz, alphar);
-        F_xf = F_xtotal(idx)/2;
-        F_xr = F_xtotal(idx)/2;
+        F_xf = 0.6*F_xtotal(idx);
+        F_xr = 0.4*F_xtotal(idx);
 
         % Step 3: calculate derivatives of state variables
         U_x_dot = ((F_xr + F_xf * cos(delta(idx)) - F_yf * sin(delta(idx))) / car.m) + r(idx) * U_y(idx);

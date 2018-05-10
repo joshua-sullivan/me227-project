@@ -1,4 +1,4 @@
-function [Ux_des, Ux_dot_des] = planPath(path)
+function path = planPath(path)
 % This function outputs desired Ux and Ux_dot based on a provided path. The
 % format of path must match to that given by the ME 227 course staff. The
 % only other configurable specifications are given below, you may need to set
@@ -162,6 +162,9 @@ function [Ux_des, Ux_dot_des] = planPath(path)
         end
 
     end
+    
+    path.Ux_des_mps = Ux_des;
+    path.Ux_dot_des_mps2 = Ux_dot_des;
 
 end
 

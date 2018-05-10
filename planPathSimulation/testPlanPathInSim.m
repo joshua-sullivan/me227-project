@@ -45,7 +45,9 @@ X0(5) = 0; % s [m]
 X0(6) = 0; % dpsi [rad]
 
 % Desired speed
-[Ux_des, Ux_dot_des] = planPath(path);
+path = planPath(path);
+Ux_des = path.Ux_des_mps;
+Ux_dot_des = path.Ux_dot_des_mps2;
 useFF = true;
 
 % simulation time

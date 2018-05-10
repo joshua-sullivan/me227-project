@@ -47,7 +47,10 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     
     % Run a table look-up/interpolation from open-loop desired trajectory
     pathPlan = runPathPlanner(state, path);
-       
+    
+    % initialize dt
+    dt = 0.01;
+    
     if modeSelector == 1
     % Runs the feedforward lookahead lateral controller with a
     % feedfoward/PI-feedback longitudinal controller.
@@ -107,8 +110,8 @@ function veh = loadVehicleParams()
     veh.Wf = veh.perc_W_f * veh.W;              % vehicle front weight [N]
     veh.Wr = veh.W - veh.Wf;                    % vehicle rear weight [N]
     veh.perc_W_r = 1 - veh.perc_W_f;            % percentage weight on rear [fractional]
-    veh.a = veh.wheelbase * veh.perc_W_r;       % distance from front wheel to CG [m]
-    veh.b = veh.wheelbase * veh.perc_W_f;       % distance from rear wheel to CG [m]
+    veh.a = veh.L * veh.perc_W_r;       % distance from front wheel to CG [m]
+    veh.b = veh.L * veh.perc_W_f;       % distance from rear wheel to CG [m]
     
     % Computing understeer gradient [rad/m/s^2]
     veh.K = veh.m * ((veh.perc_W_f / veh.Caf) - (veh.perc_W_r / veh.Car));
