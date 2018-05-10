@@ -21,6 +21,7 @@ car.Wf = 0.577 * car.m * car.g;
 car.Wr = 0.423 * car.m * car.g;
 car.a = 0.423 * car.L;
 car.b = 0.577 * car.L;
+car.rW = 0.35;
 car = setCarKappa(car, car.g);
 
 % Create tires
@@ -52,7 +53,7 @@ useFF = true;
 
 % simulation time
 t_final = 50;
-dT = 0.01;
+dT = 0.001;
 t_s = 0:dT:t_final;
 N = length(t_s);
 
@@ -60,63 +61,68 @@ N = length(t_s);
 X1 = simNonLinearBikeModel(car, frontTires, rearTires, path, Ux_des, X0, t_final, dT, useFF);
 
 % Plots
-figure
-subplot(3,2,1)
-plot(t_s, X1(:,1))
-xlabel('Time [s]')
-ylabel('U_x [m/s]')
-
-subplot(3,2,2)
-plot(t_s, X1(:,2))
-xlabel('Time [s]')
-ylabel('U_y [m/s]')
-
-subplot(3,2,3)
-plot(t_s, X1(:,3) * 180/pi)
-xlabel('Time [s]')
-ylabel('r [deg/s]')
-
-subplot(3,2,4)
 plot(t_s, X1(:,4))
 xlabel('Time [s]')
 ylabel('e [m]')
 
-subplot(3,2,5)
-plot(t_s, X1(:,5))
-xlabel('Time [s]')
-ylabel('s [m]')
-
-subplot(3,2,6)
-plot(t_s, X1(:,6) * 180/pi)
-xlabel('Time [s]')
-ylabel('\Delta \Psi [deg]')
-
-figure
-subplot(2,2,1)
-plot(t_s, X1(:,7))
-xlabel('Time [s]')
-ylabel('a_x [m/s^2]')
-grid on
-
-subplot(2,2,2)
-plot(t_s, X1(:,8))
-xlabel('Time [s]')
-ylabel('a_y [m/s^2]')
-grid on
-
-subplot(2,2,3)
-plot(t_s, sqrt(X1(:,7).^2 + X1(:,8).^2))
-xlabel('Time [s]')
-ylabel('Total Acceleration')
-grid on
-
-subplot(2,2,4)
-plot(t_s, X1(:,9))
-hold on
-plot(t_s, X1(:,1))
-xlabel('Time [s]')
-ylabel('Ux_des')
-grid on
+% 
+% figure
+% subplot(3,2,1)
+% plot(t_s, X1(:,1))
+% xlabel('Time [s]')
+% ylabel('U_x [m/s]')
+% 
+% subplot(3,2,2)
+% plot(t_s, X1(:,2))
+% xlabel('Time [s]')
+% ylabel('U_y [m/s]')
+% 
+% subplot(3,2,3)
+% plot(t_s, X1(:,3) * 180/pi)
+% xlabel('Time [s]')
+% ylabel('r [deg/s]')
+% 
+% subplot(3,2,4)
+% plot(t_s, X1(:,4))
+% xlabel('Time [s]')
+% ylabel('e [m]')
+% 
+% subplot(3,2,5)
+% plot(t_s, X1(:,5))
+% xlabel('Time [s]')
+% ylabel('s [m]')
+% 
+% subplot(3,2,6)
+% plot(t_s, X1(:,6) * 180/pi)
+% xlabel('Time [s]')
+% ylabel('\Delta \Psi [deg]')
+% 
+% figure
+% subplot(2,2,1)
+% plot(t_s, X1(:,7))
+% xlabel('Time [s]')
+% ylabel('a_x [m/s^2]')
+% grid on
+% 
+% subplot(2,2,2)
+% plot(t_s, X1(:,8))
+% xlabel('Time [s]')
+% ylabel('a_y [m/s^2]')
+% grid on
+% 
+% subplot(2,2,3)
+% plot(t_s, sqrt(X1(:,7).^2 + X1(:,8).^2))
+% xlabel('Time [s]')
+% ylabel('Total Acceleration')
+% grid on
+% 
+% subplot(2,2,4)
+% plot(t_s, X1(:,9))
+% hold on
+% plot(t_s, X1(:,1))
+% xlabel('Time [s]')
+% ylabel('Ux_des')
+% grid on
 
 
 
