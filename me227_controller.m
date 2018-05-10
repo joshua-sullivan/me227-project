@@ -106,8 +106,23 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
         end
         
         % Longitudinal control law
-        [Fx_N, integrated_Ux_error] = runLongitudinalController(veh, state, delta_rad, ...
-            Fyf_N, pathPlan, integrated_Ux_error, dt);
+        K_p = 1500;
+        K_i = 10;
+        error = (pathPlan.Ux_des_mps - state.Ux_mps);
+        integrated_Ux_error = integrated_Ux_error + (error * dt);
+        if abs(error) < 0.5 
+            integrated_Ux_error = 0;    % Setting integrated error threshold on Ux_des (~ 1 mph or 0.5 m/s) to avoid integrator windup.
+        end
+        Fx_fb_N = (K_p * error) + (K_i * integrated_Ux_error);
+        rho = 1.225;                                        % atmo density [km/m^3]
+        Fdrag = 0.5 * rho * veh.CdA * state.Ux_mps^2;       % drag force [N]
+        Ux_rr_thresh_mps = 1;                               % Setting threshold
+        Frr = (veh.f_rr * veh.W) * (state.Ux_mps > Ux_rr_thresh_mps);   % Computing rolling resistance force, which only acts when the velocity is greater than Ux_rr_thresh_mps
+        Fx_ffw_N = Fdrag + Frr + ...    % Accounting for disturbance forces
+                   (veh.m * pathPlan.Ux_dot_des_mps2) + ... % Desired longitudinal accel.
+                   (Fyf_N * sin(delta_rad)) - ...           % Dynamical coupling
+                   (veh.m * state.r_radps * state.Uy_mps);  % Dynamical coupling
+        Fx_N = Fx_fb_N + Fx_ffw_N;
         
     elseif modeSelector == 2
     % Runs the lateral PID controller with a feedforward/PI-feedback
@@ -126,11 +141,23 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
         end
         
         % Longitudinal control law
-        [Fx_N, integrated_Ux_error] = runLongitudinalController(veh, state, delta_rad, ...
-            Fyf_N, pathPlan, integrated_Ux_error, dt);
-        
-    else
-    % Maybe another...
+        K_p = 1500;
+        K_i = 10;
+        error = (pathPlan.Ux_des_mps - state.Ux_mps);
+        integrated_Ux_error = integrated_Ux_error + (error * dt);
+        if abs(error) < 0.5 
+            integrated_Ux_error = 0;    % Setting integrated error threshold on Ux_des (~ 1 mph or 0.5 m/s) to avoid integrator windup.
+        end
+        Fx_fb_N = (K_p * error) + (K_i * integrated_Ux_error);
+        rho = 1.225;                                        % atmo density [km/m^3]
+        Fdrag = 0.5 * rho * veh.CdA * state.Ux_mps^2;       % drag force [N]
+        Ux_rr_thresh_mps = 1;                               % Setting threshold
+        Frr = (veh.f_rr * veh.W) * (state.Ux_mps > Ux_rr_thresh_mps);   % Computing rolling resistance force, which only acts when the velocity is greater than Ux_rr_thresh_mps
+        Fx_ffw_N = Fdrag + Frr + ...    % Accounting for disturbance forces
+                   (veh.m * pathPlan.Ux_dot_des_mps2) + ... % Desired longitudinal accel.
+                   (Fyf_N * sin(delta_rad)) - ...           % Dynamical coupling
+                   (veh.m * state.r_radps * state.Uy_mps);  % Dynamical coupling
+        Fx_N = Fx_fb_N + Fx_ffw_N;
         
     end
 
@@ -145,56 +172,6 @@ function Fy = helperFialaTireForce(Ca, alpha, mu, mu_s, W)
             
 end
 
-function [Fdrag, Frr] = computeExternalForces(veh, state)
-% Method for computing the external forces due to atmospheric drag and
-% rolling resistance acting on the vehicle at a given speed.
-
-    rho = 1.225;        % atmo density [km/m^3]
-    
-    % Computing atmospheric drag assuming constant density
-    Fdrag = 0.5 * rho * veh.CdA * state.Ux_mps^2;    % drag force [N]
-    
-    Ux_rr_thresh_mps = 1;   % Setting threshold
-    % Computing rolling resistance force, which only acts when the velocity
-    % is greater than Ux_rr_thresh_mps
-    Frr = (veh.f_rr * veh.W) * (state.Ux_mps > Ux_rr_thresh_mps); 
-        
-end
-
-function [Fx_N, integrated_error] = runLongitudinalController(veh, state, delta_rad, Fyf_N, pathPlan, integrated_error, dt)
-% Simple feedforward/feedback longitudinal controller.  
-%   FFW accounts for disturbance forces and dynamical coupling
-%   FB accounts for setpoint velocity errors (uses a PI controller).
-%   TODO: validate with simple straight path.
-
-    % Set controller gains
-    K_p = 1500;
-    K_i = 10;
-    
-    % The feedback term drives the desired velocity difference to zero:
-    error = (pathPlan.Ux_des_mps - state.Ux_mps);
-    integrated_error = integrated_error + (error * dt);
-    
-    % Setting integrated error threshold on Ux_des (~ 1 mph or 0.5 m/s)
-    % to avoid integrator windup.
-    if abs(error) < 0.5
-        integrated_error = 0;
-    end
-    
-    Fx_fb_N = (K_p * error) + (K_i * integrated_error);
-
-    % The feedforward term counteracts disturbance forces, accounts for the
-    % desired longitudinal acceleration, and accounts for lateral dynamics
-    % coupling
-    [Fdrag, Frr] = computeExternalForces(veh, state);
-    
-    Fx_ffw_N = Fdrag + Frr + ...    % Accounting for disturbance forces
-               (veh.m * pathPlan.Ux_dot_des_mps2) + ... % Desired longitudinal accel.
-               (Fyf_N * sin(delta_rad)) - ...           % Dynamical coupling
-               (veh.m * state.r_radps * state.Uy_mps);  % Dynamical coupling
-           
-    Fx_N = Fx_fb_N + Fx_ffw_N;
-end
 
 function delta_rad = runLateralPIDController(veh, state, pathPlan)
 %computes delta based on PD control law
