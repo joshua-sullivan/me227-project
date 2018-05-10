@@ -3,8 +3,8 @@ function [Ux_des, Ux_dot_des] = planPath(path)
 % format of path must match to that given by the ME 227 course staff. The
 % only other configurable specifications are given below, you may need to set
 % those a little conservatively as compared to the specifications provided
-% in the project prompt. To test this function see testPlanPath.m and
-% testPlanPathInSimulation.m
+% in the project prompt. To see usage of this function see testPlanPath.m and
+% testPlanPathInSim.m
 %
 % Strategy for the speed profile is as follows: we first calculate the max
 % speed allowed in the arcs of the track, based on this speed we calculate
