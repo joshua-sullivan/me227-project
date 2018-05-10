@@ -34,6 +34,10 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     % PI(D) controller)
     persistent integrated_Ux_error
     
+    if isempty(integrated_Ux_error)
+        integrated_Ux_error = 0;
+    end
+    
     % Create the state object for easier data passing
     state.s_m = s_m;
     state.e_m = e_m;
@@ -232,7 +236,7 @@ function pathPlan = runPathPlanner(state, path)
 % known path data.
 
     pathPlan.curv = interp1(path.s_m, path.k_1pm, state.s_m);
-    pathPlan.Ux_des_mps = [];
-    pathPlan.Ux_dot_des_mps2 = [];
+    pathPlan.Ux_des_mps = interp1(path.s_m, path.Ux_des_mps, state.s_m);
+    pathPlan.Ux_dot_des_mps2 = interp1(path.s_m, path.Ux_dot_des_mps2, state.s_m);
     
 end
