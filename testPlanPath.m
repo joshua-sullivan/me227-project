@@ -1,6 +1,6 @@
 % A simple script that calls the plan path function and plots the output Ux
 % desired and Ux_dot_desired. To see the planPath function used in a
-% simulation, see testPlanPathInSimulation.m
+% simulation, see testPlanPathInSim.m
 
 
 clc; clear; close all;
