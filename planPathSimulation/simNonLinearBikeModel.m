@@ -38,7 +38,7 @@ function X = simNonLinearBikeModel(car, frontTires, rearTires, path, Ux_des, X0,
         K = interp1(path.s_m, path.k_1pm, s(idx));
 
         
-        [delta(idx), F_xtotal(idx)] = me227_controller(s(idx), e(idx), dpsi(idx), U_x(idx), U_y(idx), r(idx), 2, path);
+        [delta(idx), F_xtotal(idx)] = me227_controller(s(idx), e(idx), dpsi(idx), U_x(idx), U_y(idx), r(idx), 1, path);
 
 % %         Calculate Control inputs
 % %         Calpha1 = 188000; % N/rad
@@ -73,7 +73,10 @@ function X = simNonLinearBikeModel(car, frontTires, rearTires, path, Ux_des, X0,
         e_dot = U_y(idx) * cos(dpsi(idx)) + U_x(idx) * sin(dpsi(idx));
         dpsi_dot = r(idx) - K * s_dot;
 
-
+        % Add noise
+        %U_x(idx) = U_x(idx) + randn/10;
+        %U_y(idx) = U_y(idx) + randn/10;
+        
         if idx < N
             % Step 4: update velocities and steer angles
             U_x(idx+1) = U_x(idx) + U_x_dot * dT;

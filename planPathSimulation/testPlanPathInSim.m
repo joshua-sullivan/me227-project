@@ -3,7 +3,7 @@
 
 clc
 close all
-clear
+clear all
 
 % Load the project data for the path info
 load project_data.mat
@@ -64,6 +64,10 @@ X1 = simNonLinearBikeModel(car, frontTires, rearTires, path, Ux_des, X0, t_final
 plot(t_s, X1(:,4))
 xlabel('Time [s]')
 ylabel('e [m]')
+title('Lookahead no noise')
+set(gca, 'FontSize', 14)
+print('Lookahead_no_noise','-djpeg')
+
 
 % 
 % figure
