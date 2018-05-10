@@ -3,8 +3,8 @@ function [Ux_des, Ux_dot_des] = planPath(path)
 % format of path must match to that given by the ME 227 course staff. The
 % only other configurable specifications are given below, you may need to set
 % those a little conservatively as compared to the specifications provided
-% in the project prompt. To see usage of this function see testPlanPath.m and
-% testPlanPathInSim.m
+% in the project prompt. To test this function see testPlanPath.m and
+% testPlanPathInSimulation.m
 %
 % Strategy for the speed profile is as follows: we first calculate the max
 % speed allowed in the arcs of the track, based on this speed we calculate
@@ -15,7 +15,7 @@ function [Ux_des, Ux_dot_des] = planPath(path)
 % segments where the transition from acceleration to decelaration happens.
 
     % max acceleration specifications
-    max_ax_pos = 3; % [m/s^2] 
+    max_ax_pos = 5; % [m/s^2] 
     max_ax_neg = -2; % [m/s^2]
     max_a = 3.5; % [m/s^2]
     
@@ -86,7 +86,7 @@ function [Ux_des, Ux_dot_des] = planPath(path)
 %             dUxds = (1 / Ux_des(j + 1)) * sqrt(max_a^2 - (2 * c^2 * ds * Ux_des(j + 1))^2);
 %             Ux_des(j) = Ux_des(j + 1) + dUxds * (path.s_m(j + 1) - path.s_m(j));
             Ux_des(j) = Ux_arc;
-            Ux_dot_des(j) = dUxds * Ux_des(j);
+            Ux_dot_des(j) = 0;
         end
     end
 
@@ -110,7 +110,7 @@ function [Ux_des, Ux_dot_des] = planPath(path)
 %             dUxds = (1 / Ux_des(j - 1)) * sqrt(max_a^2 - (2 * c^2 * ds * Ux_des(j - 1))^2);
 %             Ux_des(j) = Ux_des(j - 1) + dUxds * (path.s_m(j) - path.s_m(j - 1));
             Ux_des(j) = Ux_arc;
-            Ux_dot_des(j) = dUxds * Ux_des(j);
+            Ux_dot_des(j) = 0;
         end
     end
 
