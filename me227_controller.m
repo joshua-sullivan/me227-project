@@ -74,7 +74,7 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     % longitudinal controller.
         
         % Lateral control law
-        delta_rad = []; %runLateralPIDController(Shelley, state, etc...);
+        delta_rad = runLateralPIDController(Shelley, state, pathPlan);
         
         % Compute the lateral tire forces
         [Fyf_N, ~] = computeFialaNLTireForce(Shelley, state, delta_rad);
