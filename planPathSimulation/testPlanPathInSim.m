@@ -66,7 +66,7 @@ xlabel('Time [s]')
 ylabel('e [m]')
 title('Lookahead no noise')
 set(gca, 'FontSize', 14)
-print('Lookahead_no_noise','-djpeg')
+% print('Lookahead_no_noise','-djpeg')
 
 
 % 
