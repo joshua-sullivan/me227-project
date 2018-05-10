@@ -46,53 +46,7 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     state.Uy_mps = Uy_mps;
     state.r_radps = r_radps;
     
-    % Create the vehicle object that holds relevant parameters
-    Shelley = loadVehicleParams();   
-    
-    % Run a table look-up/interpolation from open-loop desired trajectory
-    pathPlan = runPathPlanner(state, path);
-    
-    % initialize dt
-    dt = 0.01;
-    
-    if modeSelector == 1
-    % Runs the feedforward lookahead lateral controller with a
-    % feedfoward/PI-feedback longitudinal controller.
-        
-        % Lateral control law
-        delta_rad = runLookaheadFFWController(Shelley, state, pathPlan);
-        
-        % Compute the lateral tire forces
-        [Fyf_N, ~] = computeFialaNLTireForce(Shelley, state, delta_rad);
-        
-        % Longitudinal control law
-        [Fx_N, integrated_Ux_error] = runLongitudinalController(Shelley, state, delta_rad, ...
-            Fyf_N, pathPlan, integrated_Ux_error, dt);
-        
-    elseif modeSelector == 2
-    % Runs the lateral PID controller with a feedforward/PI-feedback
-    % longitudinal controller.
-        
-        % Lateral control law
-        delta_rad = runLateralPIDController(Shelley, state, pathPlan);
-        
-        % Compute the lateral tire forces
-        [Fyf_N, ~] = computeFialaNLTireForce(Shelley, state, delta_rad);
-        
-        % Longitudinal control law
-        [Fx_N, integrated_Ux_error] = runLongitudinalController(Shelley, state, delta_rad, ...
-            Fyf_N, pathPlan, integrated_Ux_error, dt);
-        
-    else
-    % Maybe another...
-        
-    end
-
-end
-
-function veh = loadVehicleParams()
-% Method for loading the vehicle parameters.
-    
+    %% Create the vehicle object that holds relevant parameters
     % Setting parameters from the provided data sheet
     veh.m = 1659;           % mass [kg]
     veh.L = 2.468;          % wheelbase [m]
@@ -108,7 +62,6 @@ function veh = loadVehicleParams()
     veh.mu_rs = 1.03;       % cofficient of friction (rear)
     veh.Caf = 275e03;       % nonlinear front tire stiffness [N/rad]
     veh.Car = 265e03;       % nonlinear rear tire stiffness [N/rad]
-        
     % Computing dependent parameters
     veh.W = veh.m * 9.81;                       % vehicle weight (m*g) [N]
     veh.Wf = veh.perc_W_f * veh.W;              % vehicle front weight [N]
@@ -116,12 +69,50 @@ function veh = loadVehicleParams()
     veh.perc_W_r = 1 - veh.perc_W_f;            % percentage weight on rear [fractional]
     veh.a = veh.L * veh.perc_W_r;       % distance from front wheel to CG [m]
     veh.b = veh.L * veh.perc_W_f;       % distance from rear wheel to CG [m]
-    
     % Computing understeer gradient [rad/m/s^2]
     veh.K = veh.m * ((veh.perc_W_f / veh.Caf) - (veh.perc_W_r / veh.Car));
-    
     % Computing the characteristic speed [m/s]
     veh.Vch = sqrt(veh.L / veh.K);
+    
+    %% Run a table look-up/interpolation from open-loop desired trajectory
+    pathPlan = runPathPlanner(state, path);
+    
+    % initialize dt
+    dt = 0.01;
+    
+    if modeSelector == 1
+    % Runs the feedforward lookahead lateral controller with a
+    % feedfoward/PI-feedback longitudinal controller.
+        
+        % Lateral control law
+        delta_rad = runLookaheadFFWController(veh, state, pathPlan);
+        
+        % Compute the lateral tire forces
+        [Fyf_N, ~] = computeFialaNLTireForce(veh, state, delta_rad);
+        
+        % Longitudinal control law
+        [Fx_N, integrated_Ux_error] = runLongitudinalController(veh, state, delta_rad, ...
+            Fyf_N, pathPlan, integrated_Ux_error, dt);
+        
+    elseif modeSelector == 2
+    % Runs the lateral PID controller with a feedforward/PI-feedback
+    % longitudinal controller.
+        
+        % Lateral control law
+        delta_rad = runLateralPIDController(veh, state, pathPlan);
+        
+        % Compute the lateral tire forces
+        [Fyf_N, ~] = computeFialaNLTireForce(veh, state, delta_rad);
+        
+        % Longitudinal control law
+        [Fx_N, integrated_Ux_error] = runLongitudinalController(veh, state, delta_rad, ...
+            Fyf_N, pathPlan, integrated_Ux_error, dt);
+        
+    else
+    % Maybe another...
+        
+    end
+
 end
 
 function delta_rad = runLookaheadFFWController(veh, state, pathPlan)
