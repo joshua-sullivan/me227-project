@@ -53,7 +53,7 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     pathPlan = runPathPlanner(state, path);
     
     % initialize dt
-    dt = 0.001;
+    dt = 0.01;
     
     if modeSelector == 1
     % Runs the feedforward lookahead lateral controller with a
@@ -129,8 +129,8 @@ function delta_rad = runLookaheadFFWController(veh, state, pathPlan)
 % a feedforward term.
 
     % Set controller gains/params
-    K_la = 10000;
-    x_la = 15;
+    K_la = 15000;
+    x_la = 8;
 
     dPsi_ss = pathPlan.curv*((veh.m * veh.a * (state.Ux_mps^2) / ...    
         (veh.L * veh.Car_lin)) - veh.b);

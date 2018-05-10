@@ -53,7 +53,7 @@ useFF = true;
 
 % simulation time
 t_final = 50;
-dT = 0.001;
+dT = 0.01;
 t_s = 0:dT:t_final;
 N = length(t_s);
 

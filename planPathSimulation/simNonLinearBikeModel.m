@@ -93,5 +93,5 @@ function X = simNonLinearBikeModel(car, frontTires, rearTires, path, Ux_des, X0,
     
     % Setup return
     X = [U_x, U_y, r, e, s, dpsi, a_x, a_y, outUx_des];
-    animate(path, car, dpsi, s, e, delta);
+    %animate(path, car, dpsi, s, e, delta);
 end
