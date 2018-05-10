@@ -74,7 +74,7 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     % longitudinal controller.
         
         % Lateral control law
-        delta_rad = []; %runLateralPIDController(Shelley, state, etc...);
+        delta_rad = runLateralPIDController(Shelley, state, pathPlan);
         
         % Compute the lateral tire forces
         [Fyf_N, ~] = computeFialaNLTireForce(Shelley, state, delta_rad);
@@ -129,8 +129,8 @@ function delta_rad = runLookaheadFFWController(veh, state, pathPlan)
 % a feedforward term.
 
     % Set controller gains/params
-    K_la = 15000;
-    x_la = 8;
+    K_la = 6000;
+    x_la = 15;
 
     dPsi_ss = pathPlan.curv*((veh.m * veh.a * (state.Ux_mps^2) / ...    
         (veh.L * veh.Car_lin)) - veh.b);
@@ -239,4 +239,17 @@ function pathPlan = runPathPlanner(state, path)
     pathPlan.Ux_des_mps = interp1(path.s_m, path.Ux_des_mps, state.s_m);
     pathPlan.Ux_dot_des_mps2 = interp1(path.s_m, path.Ux_dot_des_mps2, state.s_m);
     
+end
+
+function delta_rad = runLateralPIDController(veh, state, pathPlan)
+%computes delta based on PD control law
+persistent prev_e_m 
+if  isempty(prev_e_m)
+    prev_e_m= 0;
+end
+
+Kp = 10000/veh.Caf;
+Kd = 50;
+delta_rad = -Kp * (state.e_m + Kd * prev_e_m);
+prev_e_m = state.e_m;
 end
