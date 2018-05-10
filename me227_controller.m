@@ -75,7 +75,9 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     veh.Vch = sqrt(veh.L / veh.K);
     
     %% Run a table look-up/interpolation from open-loop desired trajectory
-    pathPlan = runPathPlanner(state, path);
+    pathPlan.curv = interp1(path.s_m, path.k_1pm, state.s_m);
+    pathPlan.Ux_des_mps = interp1(path.s_m, path.Ux_des_mps, state.s_m);
+    pathPlan.Ux_dot_des_mps2 = interp1(path.s_m, path.Ux_dot_des_mps2, state.s_m);
     
     % initialize dt
     dt = 0.01;
@@ -220,16 +222,6 @@ function [Fx_N, integrated_error] = runLongitudinalController(veh, state, delta_
                (veh.m * state.r_radps * state.Uy_mps);  % Dynamical coupling
            
     Fx_N = Fx_fb_N + Fx_ffw_N;
-end
-
-function pathPlan = runPathPlanner(state, path)
-% Computes the open-loop path plan from the current state and the a priori
-% known path data.
-
-    pathPlan.curv = interp1(path.s_m, path.k_1pm, state.s_m);
-    pathPlan.Ux_des_mps = interp1(path.s_m, path.Ux_des_mps, state.s_m);
-    pathPlan.Ux_dot_des_mps2 = interp1(path.s_m, path.Ux_dot_des_mps2, state.s_m);
-    
 end
 
 function delta_rad = runLateralPIDController(veh, state, pathPlan)
