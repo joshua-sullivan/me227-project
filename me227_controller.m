@@ -129,13 +129,13 @@ function delta_rad = runLookaheadFFWController(veh, state, pathPlan)
 % a feedforward term.
 
     % Set controller gains/params
-    K_la = 25000;
-    x_la = 6;
+    K_la = 3500;
+    x_la = 15;
 
     dPsi_ss = pathPlan.curv*((veh.m * veh.a * (state.Ux_mps^2) / ...    
         (veh.L * veh.Car_lin)) - veh.b);
                
-    delta_ff = (K_la * x_la * dPsi_ss / veh.Caf) + ...
+    delta_ff = (K_la * x_la * dPsi_ss / veh.Caf_lin) + ...
         (pathPlan.curv * (veh.L + veh.K * state.Ux_mps^2));
     
     delta_rad = (-K_la * (state.e_m + (x_la * state.deltaPsi_rad)) / veh.Caf_lin) + delta_ff;

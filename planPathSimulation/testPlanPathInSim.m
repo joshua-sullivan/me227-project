@@ -101,32 +101,32 @@ print('Lookahead_no_noise','-djpeg')
 % xlabel('Time [s]')
 % ylabel('\Delta \Psi [deg]')
 % 
-% figure
-% subplot(2,2,1)
-% plot(t_s, X1(:,7))
-% xlabel('Time [s]')
-% ylabel('a_x [m/s^2]')
-% grid on
-% 
-% subplot(2,2,2)
-% plot(t_s, X1(:,8))
-% xlabel('Time [s]')
-% ylabel('a_y [m/s^2]')
-% grid on
-% 
-% subplot(2,2,3)
-% plot(t_s, sqrt(X1(:,7).^2 + X1(:,8).^2))
-% xlabel('Time [s]')
-% ylabel('Total Acceleration')
-% grid on
-% 
-% subplot(2,2,4)
-% plot(t_s, X1(:,9))
-% hold on
-% plot(t_s, X1(:,1))
-% xlabel('Time [s]')
-% ylabel('Ux_des')
-% grid on
+figure
+subplot(2,2,1)
+plot(t_s, X1(:,7))
+xlabel('Time [s]')
+ylabel('a_x [m/s^2]')
+grid on
+
+subplot(2,2,2)
+plot(t_s, X1(:,8))
+xlabel('Time [s]')
+ylabel('a_y [m/s^2]')
+grid on
+
+subplot(2,2,3)
+plot(t_s, sqrt(X1(:,7).^2 + X1(:,8).^2))
+xlabel('Time [s]')
+ylabel('Total Acceleration')
+grid on
+
+subplot(2,2,4)
+plot(t_s, X1(:,9))
+hold on
+plot(t_s, X1(:,1))
+xlabel('Time [s]')
+ylabel('Ux_des')
+grid on
 
 
 
