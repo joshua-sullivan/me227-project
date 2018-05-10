@@ -85,6 +85,7 @@ function path = planPath(path)
 %             ds = path.s_m(j) - path.s_m(ind_0);
 %             dUxds = (1 / Ux_des(j + 1)) * sqrt(max_a^2 - (2 * c^2 * ds * Ux_des(j + 1))^2);
 %             Ux_des(j) = Ux_des(j + 1) + dUxds * (path.s_m(j + 1) - path.s_m(j));
+%             Ux_dot_des(j) = dUxds * Ux_des(j);
             Ux_des(j) = Ux_arc;
             Ux_dot_des(j) = 0;
         end
@@ -109,6 +110,7 @@ function path = planPath(path)
 %             ds = path.s_m(j) - path.s_m(ind_0);
 %             dUxds = (1 / Ux_des(j - 1)) * sqrt(max_a^2 - (2 * c^2 * ds * Ux_des(j - 1))^2);
 %             Ux_des(j) = Ux_des(j - 1) + dUxds * (path.s_m(j) - path.s_m(j - 1));
+%             Ux_dot_des(j) = dUxds * Ux_des(j);
             Ux_des(j) = Ux_arc;
             Ux_dot_des(j) = 0;
         end
