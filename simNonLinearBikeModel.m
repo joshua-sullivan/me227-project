@@ -37,7 +37,7 @@ function X = simNonLinearBikeModel(car, frontTires, rearTires, path, Ux_des, X0,
         % Look up Curvature
         K = interp1(path.s_m, path.k_1pm, s(idx));
 
-        [delta(idx), F_xtotal(idx)] = me227_controller(s(idx), e(idx), dpsi(idx), U_x(idx), U_y(idx), r(idx), 1, path);
+        [delta(idx), F_xtotal(idx)] = me227_controller(s(idx), e(idx), dpsi(idx), U_x(idx), U_y(idx), r(idx), 2, path);
 
 % %         Calculate Control inputs
 % %         Calpha1 = 188000; % N/rad
