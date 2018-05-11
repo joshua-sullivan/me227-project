@@ -32,12 +32,14 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     % Declare persistent variables here and use a time update to
     % approximate a numerical integration (useful for integral terms in the
     % PI(D) controller)
-    persistent integrated_Ux_error
+    persistent Ux_error_window
     persistent prev_e_m
     
-    if isempty(integrated_Ux_error)
-        integrated_Ux_error = 0;
-    end
+    % Hard-coding sample time
+    DT = 0.01;
+    
+    UX_ERROR_WINDOW_DUR = 1.0;    % Ux error window duration [sec]
+    UX_ERROR_WINDOW_SIZE = UX_ERROR_WINDOW_DUR / DT; % Number of samples in a window [#]
     
     % Create the state object for easier data passing
     state.s_m = s_m;
@@ -79,10 +81,7 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     pathPlan.Ux_des_mps = interp1(path.s_m, path.Ux_des_mps, state.s_m);
     pathPlan.Ux_dot_des_mps2 = interp1(path.s_m, path.Ux_dot_des_mps2, state.s_m);
     
-    % initialize dt
-    dt = 0.01;
-    
-    % Controllers
+    % Implementing the lateral control law based on selected mode
     if modeSelector == 1
     % Runs the FF lookahead lateral controller with a feedfoward/PI-feedback longitudinal controller.
         
@@ -105,26 +104,7 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
         else
             Fyf_N = -veh.mu_fs * veh.Wf * sign(alpha_f);
         end
-        
-        % Longitudinal control law
-        K_p = 1500;
-        K_i = 10;
-        error = (pathPlan.Ux_des_mps - state.Ux_mps);
-        integrated_Ux_error = integrated_Ux_error + (error * dt);
-        if abs(error) < 0.5 
-            integrated_Ux_error = 0;                                    % Setting integrated error threshold on Ux_des (~ 1 mph or 0.5 m/s) to avoid integrator windup.
-        end
-        Fx_fb_N = (K_p * error) + (K_i * integrated_Ux_error);
-        rho = 1.225;                                                    % atmo density [km/m^3]
-        Fdrag = 0.5 * rho * veh.CdA * state.Ux_mps^2;                   % drag force [N]
-        Ux_rr_thresh_mps = 1;                                           % Setting threshold
-        Frr = (veh.f_rr * veh.W) * (state.Ux_mps > Ux_rr_thresh_mps);   % Computing rolling resistance force, which only acts when the velocity is greater than Ux_rr_thresh_mps
-        Fx_ffw_N = Fdrag + Frr + ...                                    % Accounting for disturbance forces
-                   (veh.m * pathPlan.Ux_dot_des_mps2) + ...             % Desired longitudinal accel.
-                   (Fyf_N * sin(delta_rad)) - ...                       % Dynamical coupling
-                   (veh.m * state.r_radps * state.Uy_mps);              % Dynamical coupling
-        Fx_N = Fx_fb_N + Fx_ffw_N;
-        
+     
     elseif modeSelector == 2
     % Runs the lateral PD controller with a feedforward/PI-feedback longitudinal controller.
         
@@ -132,9 +112,9 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
         if  isempty(prev_e_m)
             prev_e_m= 0;
         end
-        Kp = 9000/veh.Caf; %0.52 = 30 degrees/m
-        Kd = 30; %0.9
-        delta_rad = -Kp * (state.e_m + Kd * prev_e_m);
+        Kp_lat = 9000/veh.Caf; %0.52 = 30 degrees/m
+        Kd_lat = 30; %0.9
+        delta_rad = -Kp_lat * (state.e_m + Kd_lat * prev_e_m);
         prev_e_m = state.e_m;
         
         % Compute the lateral tire forces
@@ -147,26 +127,32 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
         else
             Fyf_N = -veh.mu_fs * veh.Wf * sign(alpha_f);
         end
-        
-        % Longitudinal control law
-        K_p = 1500;
-        K_i = 10;
-        error = (pathPlan.Ux_des_mps - state.Ux_mps);
-        integrated_Ux_error = integrated_Ux_error + (error * dt);
-        if abs(error) < 0.5 
-            integrated_Ux_error = 0;                                    % Setting integrated error threshold on Ux_des (~ 1 mph or 0.5 m/s) to avoid integrator windup.
-        end
-        Fx_fb_N = (K_p * error) + (K_i * integrated_Ux_error);
-        rho = 1.225;                                                    % atmo density [km/m^3]
-        Fdrag = 0.5 * rho * veh.CdA * state.Ux_mps^2;                   % drag force [N]
-        Ux_rr_thresh_mps = 1;                                           % Setting threshold
-        Frr = (veh.f_rr * veh.W) * (state.Ux_mps > Ux_rr_thresh_mps);   % Computing rolling resistance force, which only acts when the velocity is greater than Ux_rr_thresh_mps
-        Fx_ffw_N = Fdrag + Frr + ...                                    % Accounting for disturbance forces
-                   (veh.m * pathPlan.Ux_dot_des_mps2) + ...             % Desired longitudinal accel.
-                   (Fyf_N * sin(delta_rad)) - ...                       % Dynamical coupling
-                   (veh.m * state.r_radps * state.Uy_mps);              % Dynamical coupling
-        Fx_N = Fx_fb_N + Fx_ffw_N;
-        
     end
 
+    % Implementing the longitudinal control law
+    Kp_long = 1500;
+    Ki_long = 10;
+
+    error = (pathPlan.Ux_des_mps - state.Ux_mps);
+
+    Ux_error_window = [Ux_error_window, error];
+
+    if length(Ux_error_window) > UX_ERROR_WINDOW_SIZE
+        Ux_error_window(1) = [];    % Remove first entry to move the window along (the array shifts automatically)
+    end
+
+    % Integrating the Ux_error history over time.
+    integrated_Ux_error = DT * trapz(Ux_error_window);
+
+    Fx_fb_N = (Kp_long * error) + (Ki_long * integrated_Ux_error);
+    rho = 1.225;                                                    % atmo density [km/m^3]
+    Fdrag = 0.5 * rho * veh.CdA * state.Ux_mps^2;                   % drag force [N]
+    Ux_rr_thresh_mps = 1;                                           % Setting threshold
+    Frr = (veh.f_rr * veh.W) * (state.Ux_mps > Ux_rr_thresh_mps);   % Computing rolling resistance force, which only acts when the velocity is greater than Ux_rr_thresh_mps
+    Fx_ffw_N = Fdrag + Frr + ...                                    % Accounting for disturbance forces
+               (veh.m * pathPlan.Ux_dot_des_mps2) + ...             % Desired longitudinal accel.
+               (Fyf_N * sin(delta_rad)) - ...                       % Dynamical coupling
+               (veh.m * state.r_radps * state.Uy_mps);              % Dynamical coupling
+    Fx_N = Fx_fb_N + Fx_ffw_N;
+    
 end
