@@ -132,8 +132,8 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
         if  isempty(prev_e_m)
             prev_e_m= 0;
         end
-        Kp = 9000/veh.Caf;
-        Kd = 30;
+        Kp = 9000/veh.Caf; %0.52 = 30 degrees/m
+        Kd = 30; %0.9
         delta_rad = -Kp * (state.e_m + Kd * prev_e_m);
         prev_e_m = state.e_m;
         
