@@ -33,12 +33,13 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     % approximate a numerical integration (useful for integral terms in the
     % PI(D) controller)
     persistent Ux_error_window
+    persistent Ux_error_prior
     persistent prev_e_m
     
-    % Hard-coding sample time
-    DT = 0.01;
+    % Hard-coding sample time (5 ms)
+    DT = 0.005;     % [sec]
     
-    UX_ERROR_WINDOW_DUR = 1.0;    % Ux error window duration [sec]
+    UX_ERROR_WINDOW_DUR = 0.5;    % Ux error window duration [sec]
     UX_ERROR_WINDOW_SIZE = UX_ERROR_WINDOW_DUR / DT; % Number of samples in a window [#]
     
     % Create the state object for easier data passing
@@ -86,7 +87,8 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     % Runs the FF lookahead lateral controller with a feedfoward/PI-feedback longitudinal controller.
         
         % Lateral control law
-        K_la = 3500;
+%         K_la = 3500;
+        K_la = 35000;
         x_la = 15;
         dPsi_ss = pathPlan.curv*((veh.m * veh.a * (state.Ux_mps^2) / ...    
             (veh.L * veh.Car_lin)) - veh.b);
@@ -112,7 +114,8 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
         if  isempty(prev_e_m)
             prev_e_m= 0;
         end
-        Kp_lat = 6000/veh.Caf;
+%         Kp_lat = 6000/veh.Caf;
+        Kp_lat = 50000/veh.Caf;
         Kd_lat = 45;
         delta_rad = -Kp_lat * (state.e_m + Kd_lat * prev_e_m);
         prev_e_m = state.e_m;
@@ -130,21 +133,33 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     end
 
     % Implementing the longitudinal control law
-    Kp_long = 1500;
-    Ki_long = 10;
+    Kp_long = 10e04;
+    Ki_long = 1e03;
+    Kd_long = 5e01;
 
-    error = (pathPlan.Ux_des_mps - state.Ux_mps);
+    Ux_error = (pathPlan.Ux_des_mps - state.Ux_mps);
+    
+    if isempty(Ux_error_prior)
+        Ux_error_derivative = 0;
+    else
+        Ux_error_derivative = (Ux_error - Ux_error_prior) / DT;
+    end
+    
+    Ux_error_prior = Ux_error;
 
-    Ux_error_window = [Ux_error_window, error];
+    Ux_error_window = [Ux_error_window, Ux_error];
 
     if length(Ux_error_window) > UX_ERROR_WINDOW_SIZE
         Ux_error_window(1) = [];    % Remove first entry to move the window along (the array shifts automatically)
     end
 
     % Integrating the Ux_error history over time.
-    integrated_Ux_error = DT * trapz(Ux_error_window);
-
-    Fx_fb_N = (Kp_long * error) + (Ki_long * integrated_Ux_error);
+    Ux_error_integral = DT * trapz(Ux_error_window);
+    
+    Fx_fb_N = (Kp_long * Ux_error) +... 
+              (Ki_long * Ux_error_integral) +...
+              (Kd_long * Ux_error_derivative);
+          
     rho = 1.225;                                                    % atmo density [km/m^3]
     Fdrag = 0.5 * rho * veh.CdA * state.Ux_mps^2;                   % drag force [N]
     Ux_rr_thresh_mps = 1;                                           % Setting threshold

@@ -6,7 +6,7 @@ close all
 clear
 
 % Load the project data for the path info
-load project_data.mat
+% load project_data.mat
 
 g = 9.81;
 
@@ -23,6 +23,9 @@ car.a = 0.423 * car.L;
 car.b = 0.577 * car.L;
 car.rW = 0.35;
 car = setCarKappa(car, car.g);
+car.CdA = 0.594;
+car.f_rr = 0.0157;
+car.W = car.m * car.g;
 
 % Create tires
 frontTires.C_alpha = 275000; % N/rad
@@ -46,19 +49,20 @@ X0(5) = 0; % s [m]
 X0(6) = 0; % dpsi [rad]
 
 % Desired speed
-path = planPath(path);
+% path = planPath(path);
+load('path.mat')
 Ux_des = path.Ux_des_mps;
 Ux_dot_des = path.Ux_dot_des_mps2;
 useFF = true;
 
 % simulation time
 t_final = 50;
-dT = 0.01;
+dT = 0.005;
 t_s = 0:dT:t_final;
 N = length(t_s);
 
 % Run sim
-X1 = simNonLinearBikeModel(car, frontTires, rearTires, path, Ux_des, X0, t_final, dT, useFF);
+[X1, ctrl] = simNonLinearBikeModel(car, frontTires, rearTires, path, Ux_des, X0, t_final, dT, useFF);
 
 % Plots
 plot(t_s, X1(:,4))
@@ -125,12 +129,25 @@ plot(t_s, X1(:,9))
 hold on
 plot(t_s, X1(:,1))
 xlabel('Time [s]')
-ylabel('Ux_des')
+ylabel('Ux_{des}')
 grid on
+legend('U_{x,des}', 'U_x');
 
+error = abs(X1(:, 9) - X1(:, 1));
+figure
+plot(t_s, error)
+grid on
+xlabel('Time [s]')
+ylabel('U_x error [m/s]')
 
+figure
+plot(t_s, ctrl*180/pi)
+grid on
+xlabel('Time [s]')
+ylabel('Steer angle [deg]')
 
-
+disp('Integrated longitudinal velocity error over time [m]:')
+disp(0.005*trapz(error))
 
 
 
