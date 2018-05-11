@@ -87,8 +87,8 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     % Runs the FF lookahead lateral controller with a feedfoward/PI-feedback longitudinal controller.
         
         % Lateral control law
-        % K_la = 8000;
-        K_la = 35000;
+        K_la = 8000;
+        %K_la = 35000;
         x_la = 15;
         dPsi_ss = pathPlan.curv*((veh.m * veh.a * (state.Ux_mps^2) / ...    
             (veh.L * veh.Car_lin)) - veh.b);
@@ -114,9 +114,9 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
         if  isempty(prev_e_m)
             prev_e_m= 0;
         end
-        % Kp_lat = 9000/veh.Caf; %0.52 = 30 degrees/m
+        %Kp_lat = 9000/veh.Caf; %0.52 = 30 degrees/m
         Kp_lat = 50000/veh.Caf;
-        Kd_lat = 30; %0.9
+        Kd_lat = 5; %0.9
         delta_rad = -Kp_lat * (state.e_m + Kd_lat * prev_e_m);
         prev_e_m = state.e_m;
         

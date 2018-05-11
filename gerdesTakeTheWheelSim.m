@@ -6,7 +6,7 @@ close all
 clear
 
 % Load the project data for the path info
-% load project_data.mat
+load project_data.mat
 
 g = 9.81;
 
@@ -49,8 +49,8 @@ X0(5) = 0; % s [m]
 X0(6) = 0; % dpsi [rad]
 
 % Desired speed
-% path = planPath(path);
-load('path.mat')
+path = planPath(path);
+%load('path.mat')
 Ux_des = path.Ux_des_mps;
 Ux_dot_des = path.Ux_dot_des_mps2;
 useFF = true;
