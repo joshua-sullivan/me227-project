@@ -1,4 +1,4 @@
-function X = simNonLinearBikeModel(car, frontTires, rearTires, path, Ux_des, X0, t_final, dT, useFF)
+function [X, ctrl] = simNonLinearBikeModel(car, frontTires, rearTires, path, Ux_des, X0, t_final, dT, useFF)
     
     % time
     t_s = 0:dT:t_final;
@@ -63,9 +63,21 @@ function X = simNonLinearBikeModel(car, frontTires, rearTires, path, Ux_des, X0,
         F_yr = computeTireForce(rearTires, Fz, alphar);
         F_xf = 0.6*F_xtotal(idx);
         F_xr = 0.4*F_xtotal(idx);
+        
+        state.s_m = s(idx);
+        state.e_m = e(idx);
+        state.deltaPsi_rad = dpsi(idx);
+        state.Ux_mps = U_x(idx);
+        state.Uy_mps = U_y(idx);
+        state.r_radps = r(idx);
+        
+        % Computing external forces on the vehicle
+        [Fdrag_N, Frr_N] = computeExternalForces(car, state);
+        Fgrade_N = 0.05 * car.W * sin(0.5 * rand(1));  % Optional unmodeled disturbance due to grade
+        Fext_N = Fdrag_N + Frr_N + Fgrade_N;
 
         % Step 3: calculate derivatives of state variables
-        U_x_dot = ((F_xr + F_xf * cos(delta(idx)) - F_yf * sin(delta(idx))) / car.m) + r(idx) * U_y(idx);
+        U_x_dot = ((-Fext_N + F_xr + F_xf * cos(delta(idx)) - F_yf * sin(delta(idx))) / car.m) + r(idx) * U_y(idx);
         U_y_dot = ((F_yf * cos(delta(idx)) + F_yr + F_xf * sin(delta(idx))) / car.m) - r(idx) * U_x(idx);
         r_dot = (car.a * F_yf * cos(delta(idx)) + car.a * F_xf * sin(delta(idx)) - car.b * F_yr) / car.Iz;
         s_dot = (1 / (1 - e(idx) * K) ) * ( U_x(idx) * cos(dpsi(idx)) - U_y(idx) * sin(dpsi(idx)));
@@ -95,5 +107,22 @@ function X = simNonLinearBikeModel(car, frontTires, rearTires, path, Ux_des, X0,
     
     % Setup return
     X = [U_x, U_y, r, e, s, dpsi, a_x, a_y, outUx_des];
+    ctrl = delta;
     %animate(path, car, dpsi, s, e, delta);
+end
+
+function [Fdrag, Frr] = computeExternalForces(veh, state)
+% Method for computing the external forces due to atmospheric drag and
+% rolling resistance acting on the vehicle at a given speed.
+
+    rho = 1.225;        % atmo density [km/m^3]
+    
+    % Computing atmospheric drag assuming constant density
+    Fdrag = 0.5 * rho * veh.CdA * state.Ux_mps^2;    % drag force [N]
+    
+    Ux_rr_thresh_mps = 1;   % Setting threshold
+    % Computing rolling resistance force, which only acts when the velocity
+    % is greater than Ux_rr_thresh_mps
+    Frr = (veh.f_rr * veh.W) * (state.Ux_mps > Ux_rr_thresh_mps); 
+        
 end
