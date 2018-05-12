@@ -42,11 +42,7 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     UX_ERROR_WINDOW_DUR = 0.5;    % Ux error window duration [sec]
     UX_ERROR_WINDOW_SIZE = UX_ERROR_WINDOW_DUR / DT; % Number of samples in a window [#]
     
-    % Initialize persistent variables
-    Ux_error_window = zeros(UX_ERROR_WINDOW_SIZE, 1);
-    Ux_error_prior = 0;
-    prev_e_m = 0;
-    currTime = 0;
+    
     
     % Initialize Outputs
     Fyf_N = 0;
@@ -54,6 +50,10 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     
     % Set time
     if isempty(currTime)
+        % Initialize persistent variables
+        Ux_error_window = zeros(UX_ERROR_WINDOW_SIZE, 1);
+        Ux_error_prior = 0;
+        prev_e_m = 0;
         currTime = 0;
     else
         currTime = currTime + 1;
