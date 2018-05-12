@@ -35,12 +35,29 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     persistent Ux_error_window
     persistent Ux_error_prior
     persistent prev_e_m
+    persistent currTime
     
-    % Hard-coding sample time (5 ms)
+    % Initializing constants
     DT = 0.005;     % [sec]
-    
     UX_ERROR_WINDOW_DUR = 0.5;    % Ux error window duration [sec]
     UX_ERROR_WINDOW_SIZE = UX_ERROR_WINDOW_DUR / DT; % Number of samples in a window [#]
+    
+    % Initialize persistent variables
+    Ux_error_window = zeros(UX_ERROR_WINDOW_SIZE, 1);
+    Ux_error_prior = 0;
+    prev_e_m = 0;
+    currTime = 0;
+    
+    % Initialize Outputs
+    Fyf_N = 0;
+    delta_rad = 0;
+    
+    % Set time
+    if isempty(currTime)
+        currTime = 0;
+    else
+        currTime = currTime + 1;
+    end
     
     % Create the state object for easier data passing
     state.s_m = s_m;
@@ -50,6 +67,12 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     state.Uy_mps = Uy_mps;
     state.r_radps = r_radps;
     
+    % Creating vehicle struct
+    veh = struct(   'm',0,'L',0','Iz',0,'perc_W_f',0,'f_rr',0,...
+                    'CdA',0,'Caf_lin',0,'Car_lin',0,'mu_f',0,...
+                    'mu_fs',0,'mu_r',0,'mu_rs',0,'Caf',0,...
+                    'Car',0,'W',0,'Wf',0,'Wr',0,'perc_W_r',0,...
+                    'a',0,'b',0,'K',0,'Vch',0);
     % Setting parameters from the provided data sheet
     veh.m = 1659;                                                   % mass [kg]
     veh.L = 2.468;                                                  % wheelbase [m]
@@ -111,14 +134,15 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
     % Runs the lateral PD controller with a feedforward/PI-feedback longitudinal controller.
         
         % Lateral control law (compute delta based on PD control law)
-        if  isempty(prev_e_m)
+        if currTime == 0
             prev_e_m= 0;
+        else
+            prev_e_m = state.e_m;
         end
         %Kp_lat = 9000/veh.Caf; %0.52 = 30 degrees/m
         Kp_lat = 50000/veh.Caf;
         Kd_lat = 5; %0.9
         delta_rad = -Kp_lat * (state.e_m + Kd_lat * prev_e_m);
-        prev_e_m = state.e_m;
         if delta_rad > deg2rad(20)
             delta_rad = deg2rad(20);
         elseif delta_rad < -1*deg2rad(20)
@@ -144,19 +168,18 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
 
     Ux_error = (pathPlan.Ux_des_mps - state.Ux_mps);
     
-    if isempty(Ux_error_prior)
+    if currTime == 0
         Ux_error_derivative = 0;
+        Ux_error_window = zeros(UX_ERROR_WINDOW_SIZE, 1);
+        Ux_error_prior = 0;
     else
         Ux_error_derivative = (Ux_error - Ux_error_prior) / DT;
+        Ux_error_prior = Ux_error;
     end
     
-    Ux_error_prior = Ux_error;
-
-    Ux_error_window = [Ux_error_window, Ux_error];
-
-    if length(Ux_error_window) > UX_ERROR_WINDOW_SIZE
-        Ux_error_window(1) = [];    % Remove first entry to move the window along (the array shifts automatically)
-    end
+    % Remove first entry to move the window along (the array shifts automatically)
+    Ux_error_window(1:UX_ERROR_WINDOW_SIZE-1) = Ux_error_window(2:UX_ERROR_WINDOW_SIZE);
+    Ux_error_window(UX_ERROR_WINDOW_SIZE) = Ux_error;
 
     % Integrating the Ux_error history over time.
     Ux_error_integral = DT * trapz(Ux_error_window);
