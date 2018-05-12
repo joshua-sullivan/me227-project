@@ -1,2 +1,7 @@
 *.asv
 *.mat
+
+# codegen
+codegen/
+*.mexmaci64
+
