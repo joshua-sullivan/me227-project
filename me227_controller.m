@@ -119,6 +119,11 @@ function [delta_rad, Fx_N] = me227_controller(s_m, e_m, deltaPsi_rad, Ux_mps, Uy
         Kd_lat = 5; %0.9
         delta_rad = -Kp_lat * (state.e_m + Kd_lat * prev_e_m);
         prev_e_m = state.e_m;
+        if delta_rad > deg2rad(20)
+            delta_rad = deg2rad(20);
+        elseif delta_rad < -1*deg2rad(20)
+            delta_rad = -1*deg2rad(20);
+        end
         
         % Compute the lateral tire forces
         alpha_f = atan2(state.Uy_mps + (veh.a * state.r_radps), state.Ux_mps) - delta_rad;
