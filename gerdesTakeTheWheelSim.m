@@ -4,6 +4,7 @@
 clc
 close all
 clear
+clear me227_controller
 
 % Load the project data for the path info
 load project_data.mat
