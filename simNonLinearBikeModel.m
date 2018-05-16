@@ -37,7 +37,7 @@ function [X, ctrl] = simNonLinearBikeModel(car, frontTires, rearTires, path, Ux_
         % Look up Curvature
         K = interp1(path.s_m, path.k_1pm, s(idx));
 
-        [delta(idx), F_xtotal(idx)] = me227_controller(s(idx), e(idx), dpsi(idx), U_x(idx), U_y(idx), r(idx), 2, path);
+        [delta(idx), F_xtotal(idx)] = gerdes_me227_controller(s(idx), e(idx), dpsi(idx), U_x(idx), U_y(idx), r(idx), 1, path);
 
 % %         Calculate Control inputs
 % %         Calpha1 = 188000; % N/rad
@@ -59,11 +59,13 @@ function [X, ctrl] = simNonLinearBikeModel(car, frontTires, rearTires, path, Ux_
 
         % Step 2: calculate forces from slip angles
         Fz = car.m * car.g;
-        F_yf = computeTireForce(frontTires, Fz, alphaf);
-        F_yr = computeTireForce(rearTires, Fz, alphar);
         F_xf = 0.6*F_xtotal(idx);
         F_xr = 0.4*F_xtotal(idx);
-        
+%          F_yf = computeTireForce(frontTires, Fz, alphaf);
+         F_yf = computeCoupledTireForce(frontTires, Fz, F_xf, alphaf);
+%          F_yr = computeTireForce(rearTires, Fz, alphar);
+         F_yr = computeCoupledTireForce(rearTires, Fz, F_xr, alphar);
+
         state.s_m = s(idx);
         state.e_m = e(idx);
         state.deltaPsi_rad = dpsi(idx);
