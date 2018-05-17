@@ -14,6 +14,8 @@ function [X, ctrl] = simNonLinearBikeModel(car, frontTires, rearTires, path, Ux_
     a_y = zeros(N,1);
     a_x = zeros(N,1);
     outUx_des = zeros(N,1);
+    F_yf = zeros(N,1);
+    F_yr = zeros(N,1);
     
     % Set initial condition
     U_x(1) = X0(1);
@@ -59,12 +61,12 @@ function [X, ctrl] = simNonLinearBikeModel(car, frontTires, rearTires, path, Ux_
 
         % Step 2: calculate forces from slip angles
         Fz = car.m * car.g;
-        F_xf = 0.6*F_xtotal(idx);
-        F_xr = 0.4*F_xtotal(idx);
-%          F_yf = computeTireForce(frontTires, Fz, alphaf);
-         F_yf = computeCoupledTireForce(frontTires, Fz, F_xf, alphaf);
-%          F_yr = computeTireForce(rearTires, Fz, alphar);
-         F_yr = computeCoupledTireForce(rearTires, Fz, F_xr, alphar);
+        F_xf = 0.6 * F_xtotal(idx); % amount of force applied on the front tires
+        F_xr = 0.4 * F_xtotal(idx); % amount of force applied on the rear tires
+         F_yf(idx) = computeTireForce(frontTires, Fz, alphaf);
+%          F_yf(idx) = computeCoupledTireForce(frontTires, Fz, F_xf, alphaf);
+         F_yr(idx) = computeTireForce(rearTires, Fz, alphar);
+%          F_yr(idx) = computeCoupledTireForce(rearTires, Fz, F_xr, alphar);
 
         state.s_m = s(idx);
         state.e_m = e(idx);
@@ -79,9 +81,9 @@ function [X, ctrl] = simNonLinearBikeModel(car, frontTires, rearTires, path, Ux_
         Fext_N = Fdrag_N + Frr_N + Fgrade_N;
 
         % Step 3: calculate derivatives of state variables
-        U_x_dot = ((-Fext_N + F_xr + F_xf * cos(delta(idx)) - F_yf * sin(delta(idx))) / car.m) + r(idx) * U_y(idx);
-        U_y_dot = ((F_yf * cos(delta(idx)) + F_yr + F_xf * sin(delta(idx))) / car.m) - r(idx) * U_x(idx);
-        r_dot = (car.a * F_yf * cos(delta(idx)) + car.a * F_xf * sin(delta(idx)) - car.b * F_yr) / car.Iz;
+        U_x_dot = ((-Fext_N + F_xr + F_xf * cos(delta(idx)) - F_yf(idx) * sin(delta(idx))) / car.m) + r(idx) * U_y(idx);
+        U_y_dot = ((F_yf(idx) * cos(delta(idx)) + F_yr(idx) + F_xf * sin(delta(idx))) / car.m) - r(idx) * U_x(idx);
+        r_dot = (car.a * F_yf(idx) * cos(delta(idx)) + car.a * F_xf * sin(delta(idx)) - car.b * F_yr(idx)) / car.Iz;
         s_dot = (1 / (1 - e(idx) * K) ) * ( U_x(idx) * cos(dpsi(idx)) - U_y(idx) * sin(dpsi(idx)));
         e_dot = U_y(idx) * cos(dpsi(idx)) + U_x(idx) * sin(dpsi(idx));
         dpsi_dot = r(idx) - K * s_dot;
@@ -108,7 +110,7 @@ function [X, ctrl] = simNonLinearBikeModel(car, frontTires, rearTires, path, Ux_
     end
     
     % Setup return
-    X = [U_x, U_y, r, e, s, dpsi, a_x, a_y, outUx_des];
+    X = [U_x, U_y, r, e, s, dpsi, a_x, a_y, outUx_des, F_yf, F_yr];
     ctrl = delta;
     %animate(path, car, dpsi, s, e, delta);
 end
