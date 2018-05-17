@@ -7,15 +7,16 @@ function F_y = computeCoupledTireForce(tires, Fz, Fx, alpha)
     % update Fz based on weight dist
     Fz = tires.weightDist * Fz;
     
-    zeta = sqrt((mu*Fz)^2-Fx^2)/(mu*Fz);
+    zeta = sqrt((mu * Fz)^2 - Fx)/(mu * Fz);
     
     alpha_slip = atan2(3 * zeta * mu * Fz , Ca);
     
     % Compute F_y
     if abs(alpha) < alpha_slip
-        F_y = -Ca*tan(alpha)+Ca^2/(3*zeta*mu*Fz)*abs(tan(alpha))*tan(alpha)-(tan(alpha)^3)*Ca^3/(27*zeta^2*mu^2*Fz^2);
+        F_y = -Ca * tan(alpha) + Ca^2 / (3 * zeta * mu * Fz) * abs(tan(alpha)) * tan(alpha) ...
+                -(tan(alpha)^3) * Ca^3 / (27 * zeta^2 * mu^2 * Fz^2);
     else        
-        F_y = -zeta*mu*Fz*sign(alpha);
+        F_y = -zeta * mu * Fz * sign(alpha);
     end
     
 
