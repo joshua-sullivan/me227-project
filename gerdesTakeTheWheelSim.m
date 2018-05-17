@@ -4,7 +4,7 @@
 clc
 close all
 clear
-clear me227_controller
+clear gerdes_me227_controller me227_controller
 
 % Load the project data for the path info
 load project_data.mat
@@ -176,6 +176,8 @@ ylabel('Steer angle [deg]')
 
 disp('Integrated longitudinal velocity error over time [m]:')
 disp(0.005*trapz(error))
+
+
 
 
 
